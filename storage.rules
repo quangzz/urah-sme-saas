@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// Cấu hình Storage Rules tối ưu cho tài khoản Firebase Free (Spark Plan).
+// Thay vì dùng hàm get() kiểm tra chéo qua Firestore (chỉ hỗ trợ Blaze Plan),
+// Chúng ta sẽ cấp quyền Write bằng cách xác minh xem UID của người tải lên
+// có khớp với thư mục cấp quyền {uid} trong đường dẫn hay không.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Cấu trúc File Path: /workspaces/{workspaceId}/projects/{uid}/{fileName}
+    match /workspaces/{workspaceId}/projects/{uid}/{fileName} {
+      
+      // Bất kỳ ai có xác thực đều có thể Read (hoặc bạn có thể nới lỏng thêm nếu cần public)
+      allow read: if request.auth != null;
+      
+      // Chỉ cho phép User tải ảnh lên đúng thư mục UID của chính họ.
+      // Xác minh kích thước ảnh < 5MB và định dạng là Image.
+      allow write: if request.auth != null 
+                   && request.auth.uid == uid
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

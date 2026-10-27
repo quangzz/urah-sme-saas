@@ -1,0 +1,8 @@
+
+--- 2026-04-16 17:44:51.064257 ---
+Received from frontend: {'businessName': '123', 'primaryColor': '#1F3A3D', 'secondaryColor': '#B8A17F', 'shape': 'An elegant, abstract geometric emblem or a stylized symbol, often presented within a classic circular or shield-like frame, conveying exclusivity and craftsmanship.'}
+Generated logo length: 398878
+
+--- 2026-04-17 09:49:34.898362 ---
+Received from frontend: {'businessName': '123', 'primaryColor': '#2563EB', 'secondaryColor': '#F59E0B', 'shape': 'Geometric Circle'}
+Generated logo length: 4878

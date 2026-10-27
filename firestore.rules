@@ -1,0 +1,103 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper Functions ─────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function isMemberOfWorkspace(workspaceId) {
+      return isAuthenticated() && 
+        request.auth.uid in get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.memberIds;
+    }
+
+    function isWorkspaceOwnerOrAdmin(workspaceId) {
+      let workspace = get(/databases/$(database)/documents/workspaces/$(workspaceId)).data;
+      return isAuthenticated() && 
+        (workspace.members[request.auth.uid] == "Owner" || 
+         workspace.members[request.auth.uid] == "Admin");
+    }
+
+    // ── Users (/users/{userId}) ─────────────────────────────────
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false; // Không cho phép xóa user
+    }
+
+    // ── Workspaces (/workspaces/{workspaceId}) ──────────────────
+    match /workspaces/{workspaceId} {
+      allow read: if isMemberOfWorkspace(workspaceId);
+      allow create: if isAuthenticated();
+      allow update: if isWorkspaceOwnerOrAdmin(workspaceId);
+      allow delete: if false; // Soft delete only
+
+      // ── Projects (subcollection) ──────────────────────────────
+      match /projects/{projectId} {
+        allow read: if isMemberOfWorkspace(workspaceId);
+        allow create: if isMemberOfWorkspace(workspaceId);
+        allow update: if isMemberOfWorkspace(workspaceId);
+        allow delete: if isWorkspaceOwnerOrAdmin(workspaceId);
+
+        // ── Brandkits (subcollection) ───────────────────────────
+        match /brandkits/{brandkitId} {
+          allow read: if isMemberOfWorkspace(workspaceId);
+          allow create: if isMemberOfWorkspace(workspaceId);
+          allow update: if isMemberOfWorkspace(workspaceId);
+          allow delete: if isWorkspaceOwnerOrAdmin(workspaceId);
+        }
+
+        // ── Social Contents (subcollection) ─────────────────────
+        match /social_contents/{contentId} {
+          allow read: if isMemberOfWorkspace(workspaceId);
+          allow create: if isMemberOfWorkspace(workspaceId);
+          allow update: if isMemberOfWorkspace(workspaceId);
+          allow delete: if isWorkspaceOwnerOrAdmin(workspaceId);
+        }
+
+        // ── Website Contents (subcollection) ────────────────────
+        match /website_contents/{contentId} {
+          allow read: if isMemberOfWorkspace(workspaceId);
+          allow create: if isMemberOfWorkspace(workspaceId);
+          allow update: if isMemberOfWorkspace(workspaceId);
+          allow delete: if isWorkspaceOwnerOrAdmin(workspaceId);
+        }
+
+        // ── PR Articles (subcollection) ─────────────────────────
+        match /pr_articles/{articleId} {
+          allow read: if isMemberOfWorkspace(workspaceId);
+          allow create: if isMemberOfWorkspace(workspaceId);
+          allow update: if isMemberOfWorkspace(workspaceId);
+          allow delete: if isWorkspaceOwnerOrAdmin(workspaceId);
+        }
+
+        // ── Booking Campaigns (subcollection) ───────────────────
+        match /booking_campaigns/{campaignId} {
+          allow read: if isMemberOfWorkspace(workspaceId);
+          allow create: if isMemberOfWorkspace(workspaceId);
+          allow update: if isMemberOfWorkspace(workspaceId);
+          allow delete: if isWorkspaceOwnerOrAdmin(workspaceId);
+        }
+      }
+
+      // ── Influencers (workspace-level subcollection) ──────────
+      match /influencers/{influencerId} {
+        allow read: if isMemberOfWorkspace(workspaceId);
+        allow create: if isMemberOfWorkspace(workspaceId);
+        allow update: if isMemberOfWorkspace(workspaceId);
+        allow delete: if isWorkspaceOwnerOrAdmin(workspaceId);
+      }
+    }
+
+    // ── Default: Deny All ───────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
